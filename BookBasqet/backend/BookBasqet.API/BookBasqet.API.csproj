@@ -16,4 +16,9 @@
     <ProjectReference Include="..\BookBasqet.Application\BookBasqet.Application.csproj" />
     <ProjectReference Include="..\BookBasqet.Infrastructure\BookBasqet.Infrastructure.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="EmailTemplates\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

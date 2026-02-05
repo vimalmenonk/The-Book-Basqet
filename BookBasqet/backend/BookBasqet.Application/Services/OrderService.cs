@@ -1,5 +1,6 @@
 using BookBasqet.Application.DTOs.Orders;
 using BookBasqet.Application.Interfaces;
+using BookBasqet.Application.Models.Email;
 using BookBasqet.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,13 +9,23 @@ namespace BookBasqet.Application.Services;
 public class OrderService : IOrderService
 {
     private readonly IApplicationDbContext _context;
+    private readonly IEmailService _emailService;
 
-    public OrderService(IApplicationDbContext context) => _context = context;
+    public OrderService(IApplicationDbContext context, IEmailService emailService)
+    {
+        _context = context;
+        _emailService = emailService;
+    }
 
     public async Task<OrderDto> CheckoutAsync(int userId)
     {
-        var cartItems = await _context.CartItems.Include(x => x.Book).Where(x => x.UserId == userId).ToListAsync();
-        if (!cartItems.Any()) throw new InvalidOperationException("Cart is empty.");
+        var cartItems = await _context.CartItems
+            .Include(x => x.Book)
+            .Where(x => x.UserId == userId)
+            .ToListAsync();
+
+        if (!cartItems.Any())
+            throw new InvalidOperationException("Cart is empty.");
 
         foreach (var item in cartItems)
         {
@@ -22,7 +33,11 @@ public class OrderService : IOrderService
                 throw new InvalidOperationException($"Insufficient stock for {item.Book.Title}");
         }
 
+        var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId)
+                   ?? throw new InvalidOperationException("User not found.");
+
         var order = new Order { UserId = userId, Status = "Pending" };
+
         foreach (var item in cartItems)
         {
             item.Book!.StockQuantity -= item.Quantity;
@@ -37,7 +52,10 @@ public class OrderService : IOrderService
         order.TotalAmount = order.Items.Sum(x => x.Quantity * x.UnitPrice);
         _context.Orders.Add(order);
         _context.CartItems.RemoveRange(cartItems);
+
         await _context.SaveChangesAsync();
+
+        await TrySendOrderEmailsAsync(order, user, cartItems);
 
         return await MapOrderAsync(order.Id) ?? throw new InvalidOperationException("Order creation failed.");
     }
@@ -61,6 +79,27 @@ public class OrderService : IOrderService
         await _context.SaveChangesAsync();
 
         return await MapOrderAsync(orderId);
+    }
+
+    private async Task TrySendOrderEmailsAsync(Order order, User user, IReadOnlyCollection<CartItem> cartItems)
+    {
+        var model = new OrderEmailModel
+        {
+            OrderId = order.Id,
+            CustomerName = user.FullName,
+            CustomerEmail = user.Email,
+            CreatedAt = order.CreatedAt,
+            TotalAmount = order.TotalAmount,
+            Items = cartItems.Select(i => new OrderEmailItemModel
+            {
+                Title = i.Book?.Title ?? string.Empty,
+                Quantity = i.Quantity,
+                UnitPrice = i.Book?.Price ?? 0
+            }).ToList()
+        };
+
+        await _emailService.SendOrderConfirmationAsync(model);
+        await _emailService.SendAdminOrderAlertAsync(model);
     }
 
     private async Task<OrderDto?> MapOrderAsync(int orderId)

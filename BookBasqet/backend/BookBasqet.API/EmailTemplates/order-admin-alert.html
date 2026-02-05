@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>New Order Alert</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #222;">
+    <h2>New order received: #{{OrderId}}</h2>
+    <p><strong>Customer:</strong> {{CustomerName}} ({{CustomerEmail}})</p>
+    <p><strong>Placed at:</strong> {{CreatedAt}}</p>
+    <table style="border-collapse: collapse; width: 100%;" border="1" cellpadding="8">
+        <thead>
+            <tr>
+                <th align="left">Book</th>
+                <th align="left">Quantity</th>
+                <th align="left">Unit price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{OrderItemsRows}}
+        </tbody>
+    </table>
+    <p><strong>Order total:</strong> {{TotalAmount}}</p>
+</body>
+</html>
