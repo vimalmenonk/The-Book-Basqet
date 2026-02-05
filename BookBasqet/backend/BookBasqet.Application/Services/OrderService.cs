@@ -22,7 +22,7 @@ public class OrderService : IOrderService
                 throw new InvalidOperationException($"Insufficient stock for {item.Book.Title}");
         }
 
-        var order = new Order { UserId = userId, Status = "Placed" };
+        var order = new Order { UserId = userId, Status = "Pending" };
         foreach (var item in cartItems)
         {
             item.Book!.StockQuantity -= item.Quantity;
@@ -47,6 +47,21 @@ public class OrderService : IOrderService
 
     public async Task<IEnumerable<OrderDto>> GetAllOrdersAsync()
         => await _context.Orders.Select(ProjectOrder()).ToListAsync();
+
+    public async Task<OrderDto?> UpdateStatusAsync(int orderId, string status)
+    {
+        var allowedStatuses = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Pending", "Shipped", "Delivered" };
+        if (!allowedStatuses.Contains(status))
+            throw new InvalidOperationException("Invalid order status. Allowed values are Pending, Shipped, Delivered.");
+
+        var order = await _context.Orders.FirstOrDefaultAsync(x => x.Id == orderId);
+        if (order is null) return null;
+
+        order.Status = allowedStatuses.First(s => s.Equals(status, StringComparison.OrdinalIgnoreCase));
+        await _context.SaveChangesAsync();
+
+        return await MapOrderAsync(orderId);
+    }
 
     private async Task<OrderDto?> MapOrderAsync(int orderId)
         => await _context.Orders.Where(x => x.Id == orderId).Select(ProjectOrder()).FirstOrDefaultAsync();

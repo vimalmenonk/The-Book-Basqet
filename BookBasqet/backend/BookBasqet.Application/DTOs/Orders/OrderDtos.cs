@@ -2,6 +2,11 @@ namespace BookBasqet.Application.DTOs.Orders;
 
 public class CreateOrderDto { }
 
+public class UpdateOrderStatusDto
+{
+    public string Status { get; set; } = string.Empty;
+}
+
 public class OrderItemDto
 {
     public int BookId { get; set; }

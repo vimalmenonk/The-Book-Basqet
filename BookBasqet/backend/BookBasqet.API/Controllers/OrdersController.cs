@@ -28,4 +28,14 @@ public class OrdersController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
         => Ok(ApiResponse<IEnumerable<OrderDto>>.Ok(await _service.GetAllOrdersAsync()));
+
+    [Authorize(Roles = "Admin")]
+    [HttpPut("{id:int}/status")]
+    public async Task<IActionResult> UpdateStatus(int id, UpdateOrderStatusDto dto)
+    {
+        var order = await _service.UpdateStatusAsync(id, dto.Status);
+        return order is null
+            ? NotFound(ApiResponse<string>.Fail("Order not found"))
+            : Ok(ApiResponse<OrderDto>.Ok(order, "Order status updated"));
+    }
 }
