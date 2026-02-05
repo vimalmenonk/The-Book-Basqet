@@ -1,6 +1,8 @@
 using System.Text;
 using BookBasqet.Application.Interfaces;
 using BookBasqet.Application.Services;
+using BookBasqet.Application.Models.Email;
+using BookBasqet.Infrastructure.Email;
 using BookBasqet.Infrastructure.Persistence;
 using BookBasqet.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -20,11 +22,14 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
+        services.Configure<SmtpEmailOptions>(configuration.GetSection(SmtpEmailOptions.SectionName));
+
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IBookService, BookService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, TokenService>();
 
