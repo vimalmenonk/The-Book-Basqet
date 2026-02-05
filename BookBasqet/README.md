@@ -22,20 +22,21 @@ backend/
 - CRUD for books and categories
 - Cart management
 - Checkout / orders
-- SQL Server + Entity Framework Core
+- Entity Framework Core InMemory provider (development/testing)
 - Swagger + CORS + global exception handling
 
 ## Run Locally
 
-1. Install .NET 7 SDK and SQL Server.
-2. Update connection string in `backend/BookBasqet.API/appsettings.json`.
+1. Install .NET 7 SDK.
+2. (Optional) update in-memory database name in `backend/BookBasqet.API/appsettings.Development.json` under `Database:InMemoryName`.
 3. From `backend/BookBasqet.API` run:
 
 ```bash
 dotnet restore
-dotnet ef database update
 dotnet run
 ```
+
+> No SQL Server setup and no EF migrations are required for this development/testing setup.
 
 Swagger URL:
 

@@ -34,7 +34,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddInfrastructure(builder.Configuration, useInMemoryDatabase: true);
 
 builder.Services.AddCors(options =>
 {

@@ -10,7 +10,57 @@ public static class DataSeeder
 {
     public static async Task SeedAsync(ApplicationDbContext context)
     {
-        await context.Database.MigrateAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        if (!await context.Categories.AnyAsync())
+        {
+            context.Categories.AddRange(
+                new Category
+                {
+                    Id = 1,
+                    Name = "Fiction",
+                    Description = "Fictional stories",
+                    CreatedAt = DateTime.UtcNow
+                },
+                new Category
+                {
+                    Id = 2,
+                    Name = "Technology",
+                    Description = "Tech books",
+                    CreatedAt = DateTime.UtcNow
+                });
+        }
+
+        if (!await context.Books.AnyAsync())
+        {
+            context.Books.AddRange(
+                new Book
+                {
+                    Id = 1,
+                    Title = "Clean Code",
+                    Author = "Robert C. Martin",
+                    Isbn = "9780132350884",
+                    Description = "A handbook of agile software craftsmanship.",
+                    Price = 34.99m,
+                    StockQuantity = 20,
+                    CoverImageUrl = "https://placehold.co/240x320",
+                    CategoryId = 2,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new Book
+                {
+                    Id = 2,
+                    Title = "The Alchemist",
+                    Author = "Paulo Coelho",
+                    Isbn = "9780061122415",
+                    Description = "A novel about following dreams.",
+                    Price = 14.99m,
+                    StockQuantity = 50,
+                    CoverImageUrl = "https://placehold.co/240x320",
+                    CategoryId = 1,
+                    CreatedAt = DateTime.UtcNow
+                });
+        }
 
         if (!await context.Users.AnyAsync(x => x.Email == "admin@bookbasqet.com"))
         {
@@ -23,7 +73,8 @@ public static class DataSeeder
                 RoleId = (int)RoleType.Admin,
                 CreatedAt = DateTime.UtcNow
             });
-            await context.SaveChangesAsync();
         }
+
+        await context.SaveChangesAsync();
     }
 }
