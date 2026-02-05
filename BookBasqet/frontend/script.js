@@ -3,29 +3,63 @@ const $ = (selector) => document.querySelector(selector);
 const API_BASE_URL = window.BOOKBASQET_API_URL || 'https://localhost:5001/api';
 const TOKEN_STORAGE_KEY = 'bookBasqetJwtToken';
 const TOKEN_EXP_STORAGE_KEY = 'bookBasqetJwtTokenExp';
+const USER_STORAGE_KEY = 'bookBasqetAuthUser';
 let books = [];
 let cart = { items: [], total: 0 };
 
-function setToken(token, expiresAt) {
+function setToken(token, expiresAt, user = null) {
   if (!token) return;
-  sessionStorage.setItem(TOKEN_STORAGE_KEY, token);
-  sessionStorage.setItem(TOKEN_EXP_STORAGE_KEY, expiresAt || '');
+  localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  localStorage.setItem(TOKEN_EXP_STORAGE_KEY, expiresAt || '');
+
+  if (user) {
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+  }
 }
 
 function clearToken() {
-  sessionStorage.removeItem(TOKEN_STORAGE_KEY);
-  sessionStorage.removeItem(TOKEN_EXP_STORAGE_KEY);
+  localStorage.removeItem(TOKEN_STORAGE_KEY);
+  localStorage.removeItem(TOKEN_EXP_STORAGE_KEY);
+  localStorage.removeItem(USER_STORAGE_KEY);
 }
 
 function getToken() {
-  const token = sessionStorage.getItem(TOKEN_STORAGE_KEY);
-  const exp = sessionStorage.getItem(TOKEN_EXP_STORAGE_KEY);
+  const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+  const exp = localStorage.getItem(TOKEN_EXP_STORAGE_KEY);
   if (!token) return null;
   if (exp && new Date(exp) <= new Date()) {
     clearToken();
     return null;
   }
   return token;
+}
+
+function getAuthUser() {
+  const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+  if (storedUser) {
+    try {
+      return JSON.parse(storedUser);
+    } catch {
+      localStorage.removeItem(USER_STORAGE_KEY);
+    }
+  }
+
+  const token = getToken();
+  if (!token) return null;
+
+  try {
+    const base64 = token.split('.')[1]?.replace(/-/g, '+').replace(/_/g, '/');
+    if (!base64) return null;
+    const claims = JSON.parse(atob(base64));
+
+    return {
+      fullName: claims.unique_name || claims.name || '',
+      email: claims.email || '',
+      role: claims.role || ''
+    };
+  } catch {
+    return null;
+  }
 }
 
 function showMessage(targetId, message, isError = false) {
@@ -94,25 +128,172 @@ async function login(email, password) {
     body: JSON.stringify({ email, password })
   });
 
-  setToken(data?.token, data?.expiresAt);
+  setToken(data?.token, data?.expiresAt, {
+    fullName: data?.fullName,
+    email: data?.email,
+    role: data?.role
+  });
+  return data;
+}
+
+async function register(fullName, email, password) {
+  const data = await apiRequest('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ fullName, email, password })
+  });
+
+  setToken(data?.token, data?.expiresAt, {
+    fullName: data?.fullName,
+    email: data?.email,
+    role: data?.role
+  });
   return data;
 }
 
 async function ensureAuthenticated() {
   if (getToken()) return true;
 
-  const email = window.prompt('Please login to manage your cart. Enter your email:');
-  if (!email) return false;
-  const password = window.prompt('Enter your password:');
-  if (!password) return false;
+  const currentPath = `${window.location.pathname.split('/').pop() || 'index.html'}${window.location.search}${window.location.hash}`;
+  window.location.href = `login.html?redirect=${encodeURIComponent(currentPath)}`;
+  return false;
+}
 
-  try {
-    await login(email.trim(), password);
-    return true;
-  } catch (error) {
-    showGlobalError(error.message || 'Login failed.');
-    return false;
+function getRedirectTarget() {
+  const params = new URLSearchParams(window.location.search);
+  const redirect = params.get('redirect');
+  if (!redirect || redirect.startsWith('http')) return 'shop.html';
+  return redirect;
+}
+
+function logout() {
+  clearToken();
+  window.location.href = 'index.html';
+}
+
+function renderAuthActions() {
+  const container = document.getElementById('authActions');
+  if (!container) return;
+
+  const user = getAuthUser();
+
+  if (user && getToken()) {
+    const displayName = user.fullName || user.email || 'Reader';
+    container.innerHTML = `
+      <span class="auth-user">Hi, ${displayName}</span>
+      <button type="button" class="btn btn-secondary" id="logoutBtn">Logout</button>
+    `;
+
+    document.getElementById('logoutBtn')?.addEventListener('click', logout);
+    return;
   }
+
+  container.innerHTML = `
+    <a class="btn btn-secondary" href="login.html">Login</a>
+    <a class="btn btn-primary" href="register.html">Register</a>
+  `;
+}
+
+function setupAuthFormValidation() {
+  const forms = document.querySelectorAll('form[novalidate]');
+  forms.forEach((form) => {
+    form.querySelectorAll('input').forEach((input) => {
+      input.addEventListener('input', () => {
+        input.setCustomValidity('');
+      });
+    });
+  });
+}
+
+function setupLoginForm() {
+  const form = $('#loginForm');
+  if (!form) return;
+
+  if (getToken()) {
+    window.location.href = getRedirectTarget();
+    return;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = $('#loginEmail')?.value.trim() || '';
+    const password = $('#loginPassword')?.value || '';
+    const messageEl = $('#loginMsg');
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showMessage('loginMsg', 'Please enter a valid email address.', true);
+      return;
+    }
+
+    if (password.length < 6) {
+      showMessage('loginMsg', 'Password must be at least 6 characters.', true);
+      return;
+    }
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    if (messageEl) messageEl.textContent = 'Signing you in...';
+
+    try {
+      await login(email, password);
+      showMessage('loginMsg', 'Login successful. Redirecting...');
+      window.location.href = getRedirectTarget();
+    } catch (error) {
+      showMessage('loginMsg', error.message || 'Login failed.', true);
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  });
+}
+
+function setupRegisterForm() {
+  const form = $('#registerForm');
+  if (!form) return;
+
+  if (getToken()) {
+    window.location.href = 'shop.html';
+    return;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fullName = $('#fullName')?.value.trim() || '';
+    const email = $('#registerEmail')?.value.trim() || '';
+    const password = $('#registerPassword')?.value || '';
+    const confirmPassword = $('#confirmPassword')?.value || '';
+    const messageEl = $('#registerMsg');
+
+    if (fullName.length < 2 || fullName.length > 120) {
+      showMessage('registerMsg', 'Full name should be between 2 and 120 characters.', true);
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showMessage('registerMsg', 'Please enter a valid email address.', true);
+      return;
+    }
+
+    if (password.length < 6) {
+      showMessage('registerMsg', 'Password must be at least 6 characters.', true);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showMessage('registerMsg', 'Passwords do not match.', true);
+      return;
+    }
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    if (messageEl) messageEl.textContent = 'Creating your account...';
+
+    try {
+      await register(fullName, email, password);
+      showMessage('registerMsg', 'Registration successful. Redirecting...');
+      window.location.href = 'shop.html';
+    } catch (error) {
+      showMessage('registerMsg', error.message || 'Registration failed.', true);
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  });
 }
 
 function updateCount() {
@@ -304,6 +485,10 @@ function setYear() {
 document.addEventListener('DOMContentLoaded', async () => {
   setYear();
   setupMobileMenu();
+  renderAuthActions();
+  setupAuthFormValidation();
+  setupLoginForm();
+  setupRegisterForm();
   setupFilters();
   setupContactForm();
   setupNewsletter();
@@ -314,3 +499,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 window.addToCart = addToCart;
 window.removeFromCart = removeFromCart;
+window.logout = logout;
