@@ -1,7 +1,7 @@
 using System.Text;
 using BookBasqet.Application.Interfaces;
-using BookBasqet.Application.Services;
 using BookBasqet.Application.Models.Email;
+using BookBasqet.Application.Services;
 using BookBasqet.Infrastructure.Email;
 using BookBasqet.Infrastructure.Persistence;
 using BookBasqet.Infrastructure.Security;
@@ -15,10 +15,17 @@ namespace BookBasqet.Infrastructure.DependencyInjection;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration, bool useInMemoryDatabase = true)
     {
+        if (!useInMemoryDatabase)
+        {
+            throw new InvalidOperationException("This development/testing setup supports only the EF Core InMemory provider.");
+        }
+
+        var inMemoryDatabaseName = configuration["Database:InMemoryName"] ?? "BookBasqetDb";
+
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            options.UseInMemoryDatabase(inMemoryDatabaseName));
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
