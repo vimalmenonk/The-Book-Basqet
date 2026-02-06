@@ -1,0 +1,53 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BookBasqet", "BookBasqet", "{723FC2A9-77AF-8A32-7F64-CB5411541FBA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend", "backend", "{5233715D-DE09-F9E1-E7AB-ED2572051933}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookBasqet.API", "BookBasqet\backend\BookBasqet.API\BookBasqet.API.csproj", "{19B1CB70-2713-7CBA-8BDB-972099300CFC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookBasqet.Application", "BookBasqet\backend\BookBasqet.Application\BookBasqet.Application.csproj", "{0E38B8D2-6C12-257D-2374-8373D6CEA629}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookBasqet.Domain", "BookBasqet\backend\BookBasqet.Domain\BookBasqet.Domain.csproj", "{0BFFA041-E6FA-DA77-A47A-0BA429C4ACCE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookBasqet.Infrastructure", "BookBasqet\backend\BookBasqet.Infrastructure\BookBasqet.Infrastructure.csproj", "{F201DD7B-D6D2-F3BE-2109-2473CE522620}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{19B1CB70-2713-7CBA-8BDB-972099300CFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19B1CB70-2713-7CBA-8BDB-972099300CFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19B1CB70-2713-7CBA-8BDB-972099300CFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19B1CB70-2713-7CBA-8BDB-972099300CFC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E38B8D2-6C12-257D-2374-8373D6CEA629}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E38B8D2-6C12-257D-2374-8373D6CEA629}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E38B8D2-6C12-257D-2374-8373D6CEA629}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E38B8D2-6C12-257D-2374-8373D6CEA629}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BFFA041-E6FA-DA77-A47A-0BA429C4ACCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BFFA041-E6FA-DA77-A47A-0BA429C4ACCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BFFA041-E6FA-DA77-A47A-0BA429C4ACCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BFFA041-E6FA-DA77-A47A-0BA429C4ACCE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F201DD7B-D6D2-F3BE-2109-2473CE522620}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F201DD7B-D6D2-F3BE-2109-2473CE522620}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F201DD7B-D6D2-F3BE-2109-2473CE522620}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F201DD7B-D6D2-F3BE-2109-2473CE522620}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5233715D-DE09-F9E1-E7AB-ED2572051933} = {723FC2A9-77AF-8A32-7F64-CB5411541FBA}
+		{19B1CB70-2713-7CBA-8BDB-972099300CFC} = {5233715D-DE09-F9E1-E7AB-ED2572051933}
+		{0E38B8D2-6C12-257D-2374-8373D6CEA629} = {5233715D-DE09-F9E1-E7AB-ED2572051933}
+		{0BFFA041-E6FA-DA77-A47A-0BA429C4ACCE} = {5233715D-DE09-F9E1-E7AB-ED2572051933}
+		{F201DD7B-D6D2-F3BE-2109-2473CE522620} = {5233715D-DE09-F9E1-E7AB-ED2572051933}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9BE4F64B-C0D4-4CBC-B569-BE1B874D4053}
+	EndGlobalSection
+EndGlobal

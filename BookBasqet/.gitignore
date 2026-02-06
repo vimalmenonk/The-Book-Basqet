@@ -1,0 +1,60 @@
+# =========================
+# .NET / ASP.NET Core
+# =========================
+bin/
+obj/
+**/bin/
+**/obj/
+
+# Build results
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / VS / VS Code
+.vs/
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# ASP.NET Core
+appsettings.Development.json
+appsettings.Local.json
+
+# Entity Framework
+*.db
+*.db-shm
+*.db-wal
+
+# Test results
+TestResults/
+
+# Node (if frontend exists)
+node_modules/
+dist/
+build/
+
+# Environment files
+.env
+.env.*
+
+# Certificates
+*.pfx
+*.cer
+
+# Coverage
+coverage/
+
+# Logs
+logs/
