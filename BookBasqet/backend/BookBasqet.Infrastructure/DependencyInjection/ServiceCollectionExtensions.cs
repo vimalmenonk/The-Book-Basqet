@@ -67,7 +67,7 @@ public static class ServiceCollectionExtensions
                 {
                     if (context.Exception is SecurityTokenExpiredException)
                     {
-                        context.Response.Headers.Append("Token-Expired", "true");
+                        context.Response.Headers["Token-Expired"] = "true";
                     }
 
                     return Task.CompletedTask;
