@@ -22,5 +22,15 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
-        => Ok(ApiResponse<AuthResponse>.Ok(await _authService.LoginAsync(request), "Login successful"));
+    {
+        try
+        {
+            var response = await _authService.LoginAsync(request);
+            return Ok(ApiResponse<AuthResponse>.Ok(response, "Login successful"));
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized(ApiResponse<string>.Fail("Invalid email or password."));
+        }
+    }
 }

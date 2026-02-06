@@ -48,6 +48,12 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await DataSeeder.SeedAsync(context);
+}
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
@@ -56,12 +62,7 @@ app.UseHttpsRedirection();
 app.UseCors("FrontendPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();
 
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    await DataSeeder.SeedAsync(context);
-}
+app.MapControllers();
 
 app.Run();
