@@ -16,10 +16,12 @@ public class OrdersController : ControllerBase
 
     public OrdersController(IOrderService service) => _service = service;
 
+    [Authorize(Roles = "User")]
     [HttpPost("checkout")]
     public async Task<IActionResult> Checkout()
         => Ok(ApiResponse<OrderDto>.Ok(await _service.CheckoutAsync(User.GetUserId()), "Order placed"));
 
+    [Authorize(Roles = "User")]
     [HttpGet("mine")]
     public async Task<IActionResult> Mine()
         => Ok(ApiResponse<IEnumerable<OrderDto>>.Ok(await _service.GetMyOrdersAsync(User.GetUserId())));

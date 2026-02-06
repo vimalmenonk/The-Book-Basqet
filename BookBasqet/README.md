@@ -1,9 +1,9 @@
 # Book Basqet
 
-This repository now contains:
+This repository contains:
 
-- `frontend/` (existing HTML/CSS/JavaScript UI)
-- `backend/` (ASP.NET Core Web API with Clean Architecture)
+- `frontend/` (HTML/CSS/JavaScript UI)
+- `backend/` (ASP.NET Core Web API, .NET 7, EF Core InMemory)
 
 ## Backend Structure
 
@@ -15,77 +15,169 @@ backend/
 └── BookBasqet.Infrastructure/
 ```
 
-## Features
+## Authentication & Authorization Summary
 
-- User register/login with JWT
-- Role-based authorization (`Admin`, `User`)
-- CRUD for books and categories
-- Cart management
-- Checkout / orders
-- Entity Framework Core InMemory provider (development/testing)
-- Swagger + CORS + global exception handling
+- JWT-based authentication (`/api/auth/register`, `/api/auth/login`)
+- Secure password hashing using PBKDF2
+- JWT includes role claim (`Admin` / `User`) and expiration
+- Token-expiration handling via strict validation (`ClockSkew = 0`) and `Token-Expired: true` response header
+- Role-based authorization:
+  - Admin-only APIs: books/category management, all orders, order status updates
+  - User-only APIs: cart operations, checkout, own orders
+  - Shared authenticated APIs: any endpoint using `[Authorize]`
+
+## Seeded Accounts (InMemory)
+
+- Admin
+  - Email: `admin@bookbasqet.com`
+  - Password: `Admin@123`
+  - Role: `Admin`
+- User
+  - Email: `user@bookbasqet.com`
+  - Password: `User@123`
+  - Role: `User`
 
 ## Run Locally
 
 1. Install .NET 7 SDK.
-2. (Optional) update in-memory database name in `backend/BookBasqet.API/appsettings.Development.json` under `Database:InMemoryName`.
-3. From `backend/BookBasqet.API` run:
+2. From `backend/BookBasqet.API`, run:
 
 ```bash
 dotnet restore
 dotnet run
 ```
 
-> No SQL Server setup and no EF migrations are required for this development/testing setup.
-
 Swagger URL:
 
-- `https://localhost:xxxx/swagger`
+- `https://localhost:<port>/swagger`
 
-Seeded admin:
+> No SQL Server setup, no migrations, and no ASP.NET Identity are required.
 
-- Email: `admin@bookbasqet.com`
-- Password: `Admin@123`
+## API Endpoints
 
-## Frontend Integration (no HTML/CSS changes needed)
+### Auth
 
-Only replace JavaScript API URLs with backend endpoints.
+- `POST /api/auth/register`
+- `POST /api/auth/login`
 
-### Endpoint Mapping
+### Books
 
-- Existing login logic -> `POST /api/auth/login`
-- Existing shop book fetch logic -> `GET /api/books`
-- Existing add-to-cart logic -> `POST /api/cart/items`
+- `GET /api/books` (public view)
+- `GET /api/books/{id}` (public view)
+- `POST /api/books` (**Admin only**)
+- `PUT /api/books/{id}` (**Admin only**)
+- `DELETE /api/books/{id}` (**Admin only**)
 
-### Sample fetch: Login
+### Categories
+
+- `GET /api/categories` (public view)
+- `GET /api/categories/{id}` (public view)
+- `POST /api/categories` (**Admin only**)
+- `PUT /api/categories/{id}` (**Admin only**)
+- `DELETE /api/categories/{id}` (**Admin only**)
+
+### Cart (User only)
+
+- `GET /api/cart`
+- `POST /api/cart/items`
+- `PUT /api/cart/items/{id}`
+- `DELETE /api/cart/items/{id}`
+
+### Orders
+
+- `POST /api/orders/checkout` (**User only**)
+- `GET /api/orders/mine` (**User only**)
+- `GET /api/orders` (**Admin only**)
+- `PUT /api/orders/{id}/status` (**Admin only**)
+
+## Swagger Test Steps
+
+1. Start API and open Swagger.
+2. Authenticate as admin (`POST /api/auth/login`) with:
+   - `admin@bookbasqet.com` / `Admin@123`
+3. Copy token from response and click **Authorize** in Swagger:
+   - Value format: `Bearer <token>`
+4. Verify admin access:
+   - `POST /api/books` should succeed.
+   - `GET /api/orders` should succeed.
+5. Authenticate as user (`POST /api/auth/login`) with:
+   - `user@bookbasqet.com` / `User@123`
+6. Authorize Swagger with user token.
+7. Verify user restrictions:
+   - `POST /api/cart/items` should succeed.
+   - `POST /api/orders/checkout` should succeed when cart has items.
+   - `GET /api/orders` should return **403 Forbidden**.
+
+## Frontend Integration Examples
+
+### Admin login (fetch)
 
 ```javascript
-const response = await fetch('https://localhost:5001/api/auth/login', {
+const adminLoginResponse = await fetch('https://localhost:5001/api/auth/login', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email, password })
+  body: JSON.stringify({
+    email: 'admin@bookbasqet.com',
+    password: 'Admin@123'
+  })
 });
-const result = await response.json();
-localStorage.setItem('token', result.data.token);
+
+const adminLoginJson = await adminLoginResponse.json();
+const adminToken = adminLoginJson.data.token;
 ```
 
-### Sample fetch: Book Listing
+### User login (fetch)
 
 ```javascript
-const response = await fetch('https://localhost:5001/api/books');
-const result = await response.json();
-const books = result.data;
+const userLoginResponse = await fetch('https://localhost:5001/api/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: 'user@bookbasqet.com',
+    password: 'User@123'
+  })
+});
+
+const userLoginJson = await userLoginResponse.json();
+const userToken = userLoginJson.data.token;
 ```
 
-### Sample fetch: Add to cart
+### Decode role from JWT on frontend
 
 ```javascript
+function parseJwt(token) {
+  const payload = token.split('.')[1];
+  return JSON.parse(atob(payload));
+}
+
 const token = localStorage.getItem('token');
+const claims = parseJwt(token);
+
+// Depending on token mapping, role is usually this URI claim:
+const role = claims['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+
+if (role === 'Admin') {
+  // show admin dashboard
+} else if (role === 'User') {
+  // show user shop/cart/orders UI
+}
+
+// token expiration check (exp is in seconds)
+const isExpired = Date.now() >= claims.exp * 1000;
+if (isExpired) {
+  localStorage.removeItem('token');
+  // redirect to login
+}
+```
+
+### Call protected endpoint with token
+
+```javascript
 await fetch('https://localhost:5001/api/cart/items', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`
+    Authorization: `Bearer ${userToken}`
   },
   body: JSON.stringify({ bookId: 1, quantity: 1 })
 });

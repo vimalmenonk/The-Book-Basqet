@@ -27,7 +27,7 @@ public class AuthService : IAuthService
         var role = await _context.Roles.FirstAsync(x => x.Id == (int)RoleType.User);
         var user = new User
         {
-            FullName = request.FullName,
+            Name = request.Name,
             Email = request.Email.ToLower(),
             PasswordHash = _passwordHasher.HashPassword(request.Password),
             RoleId = role.Id
@@ -41,7 +41,7 @@ public class AuthService : IAuthService
         {
             Token = token,
             ExpiresAt = expiresAt,
-            FullName = user.FullName,
+            Name = user.Name,
             Email = user.Email,
             Role = role.Name
         };
@@ -60,7 +60,7 @@ public class AuthService : IAuthService
         {
             Token = token,
             ExpiresAt = expiresAt,
-            FullName = user.FullName,
+            Name = user.Name,
             Email = user.Email,
             Role = user.Role?.Name ?? "User"
         };

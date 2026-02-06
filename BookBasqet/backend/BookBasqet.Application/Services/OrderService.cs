@@ -86,7 +86,7 @@ public class OrderService : IOrderService
         var model = new OrderEmailModel
         {
             OrderId = order.Id,
-            CustomerName = user.FullName,
+            CustomerName = user.Name,
             CustomerEmail = user.Email,
             CreatedAt = order.CreatedAt,
             TotalAmount = order.TotalAmount,

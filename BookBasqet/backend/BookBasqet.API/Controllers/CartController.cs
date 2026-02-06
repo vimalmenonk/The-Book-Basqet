@@ -9,7 +9,7 @@ namespace BookBasqet.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Roles = "User")]
 public class CartController : ControllerBase
 {
     private readonly ICartService _service;
