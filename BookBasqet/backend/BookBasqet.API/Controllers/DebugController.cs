@@ -22,11 +22,24 @@ public class DebugController : ControllerBase
                 x.Id,
                 x.Name,
                 x.Email,
-                Role = x.Role != null ? x.Role.Name : "Unknown",
-                PasswordHashPreview = x.PasswordHash.Length > 20 ? $"{x.PasswordHash[..20]}..." : x.PasswordHash
+                RoleName = x.Role != null ? x.Role.Name : "Unknown",
+                x.PasswordHash
             })
             .ToListAsync();
 
-        return Ok(users);
+        var response = users.Select(x => new
+        {
+            x.Id,
+            x.Name,
+            x.Email,
+            Role = x.RoleName,
+            PasswordHashPreview = string.IsNullOrEmpty(x.PasswordHash)
+                ? string.Empty
+                : x.PasswordHash.Length > 20
+                    ? x.PasswordHash.Substring(0, 20) + "..."
+                    : x.PasswordHash
+        });
+
+        return Ok(response);
     }
 }
