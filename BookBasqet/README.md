@@ -18,8 +18,8 @@ backend/
 ## Authentication & Authorization Summary
 
 - JWT-based authentication (`/api/auth/register`, `/api/auth/login`)
-- Secure password hashing using PBKDF2
-- JWT includes role claim (`Admin` / `User`) and expiration
+- Secure password hashing using BCrypt
+- JWT includes `ClaimTypes.Email` and `ClaimTypes.Role` claims (`Admin` / `User`) and expiration
 - Token-expiration handling via strict validation (`ClockSkew = 0`) and `Token-Expired: true` response header
 - Role-based authorization:
   - Admin-only APIs: books/category management, all orders, order status updates
@@ -85,6 +85,9 @@ Swagger URL:
 
 ### Orders
 
+- `GET /api/debug/users` (temporary endpoint to verify in-memory seeded users)
+
+
 - `POST /api/orders/checkout` (**User only**)
 - `GET /api/orders/mine` (**User only**)
 - `GET /api/orders` (**Admin only**)
@@ -107,6 +110,43 @@ Swagger URL:
    - `POST /api/cart/items` should succeed.
    - `POST /api/orders/checkout` should succeed when cart has items.
    - `GET /api/orders` should return **403 Forbidden**.
+
+## Swagger Login Request Example
+
+Use `POST /api/auth/login` with:
+
+```json
+{
+  "email": "admin@bookbasqet.com",
+  "password": "Admin@123"
+}
+```
+
+(or user credentials: `user@bookbasqet.com` / `User@123`).
+
+## Example JWT Payload
+
+```json
+{
+  "sub": "1",
+  "unique_name": "System Admin",
+  "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress": "admin@bookbasqet.com",
+  "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": "Admin",
+  "nbf": 1730000000,
+  "exp": 1730007200,
+  "iss": "BookBasqet.API",
+  "aud": "BookBasqet.Frontend"
+}
+```
+
+## How to Test Admin/User Login
+
+1. Run the API (`dotnet run`) so startup seeding runs automatically only when the users table is empty.
+2. Call `GET /api/debug/users` and verify both seeded users exist.
+3. Call `POST /api/auth/login` with admin credentials and copy the token.
+4. In Swagger Authorize, set `Bearer <token>` and call an Admin endpoint (`POST /api/books`).
+5. Login as normal user and authorize with user token.
+6. Verify User endpoints work (`GET /api/cart`) and Admin endpoints are forbidden (`GET /api/orders` returns 403).
 
 ## Frontend Integration Examples
 

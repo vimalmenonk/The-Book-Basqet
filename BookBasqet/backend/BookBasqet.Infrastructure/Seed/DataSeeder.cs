@@ -62,30 +62,27 @@ public static class DataSeeder
                 });
         }
 
-        var hasher = new PasswordHasher();
-
-        if (!await context.Users.AnyAsync(x => x.Email == "admin@bookbasqet.com"))
+        if (!await context.Users.AnyAsync())
         {
-            context.Users.Add(new User
-            {
-                Name = "System Admin",
-                Email = "admin@bookbasqet.com",
-                PasswordHash = hasher.HashPassword("Admin@123"),
-                RoleId = (int)RoleType.Admin,
-                CreatedAt = DateTime.UtcNow
-            });
-        }
+            var hasher = new PasswordHasher();
 
-        if (!await context.Users.AnyAsync(x => x.Email == "user@bookbasqet.com"))
-        {
-            context.Users.Add(new User
-            {
-                Name = "Default User",
-                Email = "user@bookbasqet.com",
-                PasswordHash = hasher.HashPassword("User@123"),
-                RoleId = (int)RoleType.User,
-                CreatedAt = DateTime.UtcNow
-            });
+            context.Users.AddRange(
+                new User
+                {
+                    Name = "System Admin",
+                    Email = "admin@bookbasqet.com",
+                    PasswordHash = hasher.HashPassword("Admin@123"),
+                    RoleId = (int)RoleType.Admin,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new User
+                {
+                    Name = "Default User",
+                    Email = "user@bookbasqet.com",
+                    PasswordHash = hasher.HashPassword("User@123"),
+                    RoleId = (int)RoleType.User,
+                    CreatedAt = DateTime.UtcNow
+                });
         }
 
         await context.SaveChangesAsync();

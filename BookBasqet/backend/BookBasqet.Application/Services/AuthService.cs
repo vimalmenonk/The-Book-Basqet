@@ -21,20 +21,23 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
     {
-        if (await _context.Users.AnyAsync(x => x.Email == request.Email.ToLower()))
+        var email = request.Email.Trim().ToLowerInvariant();
+
+        if (await _context.Users.AnyAsync(x => x.Email == email))
             throw new InvalidOperationException("Email is already registered.");
 
         var role = await _context.Roles.FirstAsync(x => x.Id == (int)RoleType.User);
         var user = new User
         {
             Name = request.Name,
-            Email = request.Email.ToLower(),
+            Email = email,
             PasswordHash = _passwordHasher.HashPassword(request.Password),
             RoleId = role.Id
         };
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
+
         var (token, expiresAt) = _tokenService.GenerateToken(user, role.Name);
 
         return new AuthResponse
@@ -49,20 +52,26 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
     {
-        var user = await _context.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Email == request.Email.ToLower())
+        var email = request.Email.Trim().ToLowerInvariant();
+
+        var user = await _context.Users
+            .Include(x => x.Role)
+            .FirstOrDefaultAsync(x => x.Email == email)
             ?? throw new UnauthorizedAccessException("Invalid email or password.");
 
         if (!_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid email or password.");
 
-        var (token, expiresAt) = _tokenService.GenerateToken(user, user.Role?.Name ?? "User");
+        var roleName = user.Role?.Name ?? "User";
+        var (token, expiresAt) = _tokenService.GenerateToken(user, roleName);
+
         return new AuthResponse
         {
             Token = token,
             ExpiresAt = expiresAt,
             Name = user.Name,
             Email = user.Email,
-            Role = user.Role?.Name ?? "User"
+            Role = roleName
         };
     }
 }
