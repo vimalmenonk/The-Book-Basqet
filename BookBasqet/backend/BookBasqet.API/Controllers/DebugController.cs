@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using BookBasqet.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -41,5 +43,23 @@ public class DebugController : ControllerBase
         });
 
         return Ok(response);
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        var claims = User.Claims.Select(c => new { c.Type, c.Value });
+
+        return Ok(new
+        {
+            IsAuthenticated = User.Identity?.IsAuthenticated ?? false,
+            AuthenticationType = User.Identity?.AuthenticationType,
+            Name = User.FindFirstValue(ClaimTypes.Name),
+            Email = User.FindFirstValue(ClaimTypes.Email),
+            Role = User.FindFirstValue(ClaimTypes.Role),
+            Subject = User.FindFirstValue("sub"),
+            Claims = claims
+        });
     }
 }

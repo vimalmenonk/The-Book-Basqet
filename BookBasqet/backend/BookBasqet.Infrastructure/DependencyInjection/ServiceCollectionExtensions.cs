@@ -53,12 +53,15 @@ public static class ServiceCollectionExtensions
 
         services.AddAuthentication(options =>
         {
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
         })
         .AddJwtBearer(options =>
         {
             options.RequireHttpsMetadata = false;
+            options.MapInboundClaims = false;
+            options.SaveToken = true;
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
@@ -72,7 +75,6 @@ public static class ServiceCollectionExtensions
 
                 ClockSkew = TimeSpan.Zero,
 
-                // 🔥 THIS FIXES ADMIN UNAUTHORIZED
                 RoleClaimType = ClaimTypes.Role,
                 NameClaimType = ClaimTypes.Name
             };
